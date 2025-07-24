@@ -1,0 +1,13 @@
+app.post('/api/blvd', async (req, res) => {
+  const response = await fetch('https://dashboard.boulevard.io/api/2020-01/YOUR_BUSINESS_ID/client', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${Buffer.from(YOUR_API_KEY + ':').toString('base64')}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(req.body)
+  });
+  const data = await response.json();
+  res.json(data);
+});
