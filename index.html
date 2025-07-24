@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Appointment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .chat-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 15px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .system-message {
+            text-align: left;
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .bubble {
+            display: inline-block;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .system-bubble {
+            background: #f1f3f5;
+            color: #333;
+            border-bottom-left-radius: 6px;
+        }
+
+        .user-bubble {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .button-grid.single-column {
+            grid-template-columns: 1fr;
+        }
+
+        .button-grid.three-column {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .action-button {
+            background: white;
+            border: 2px solid #4facfe;
+            color: #4facfe;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .action-button:hover {
+            background: #4facfe;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .calendar-header {
+            text-align: center;
+            font-weight: 600;
+            padding: 8px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            background: white;
+        }
+
+        .calendar-day:hover {
+            background: #f8f9fa;
+        }
+
+        .calendar-day.available {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .calendar-day.available:hover {
+            background: #2196f3;
+            color: white;
+        }
+
+        .calendar-day.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .time-slot {
+            padding: 8px 12px;
+            border: 1px solid #4facfe;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            background: white;
+            color: #4facfe;
+        }
+
+        .time-slot:hover {
+            background: #4facfe;
+            color: white;
+        }
+
+        .form-group {
+            margin-top: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .form-input.error {
+            border-color: #ff6b6b;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ffe0e0;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid #e9ecef;
+            background: white;
+        }
+
+        .back-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .back-button:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Book Your Appointment</h2>
+            <p>Let's find the perfect time for you</p>
+        </div>
+        <div class="chat-messages" id="messages"></div>
+        <div class="chat-input" id="input-area" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Load business data from API
+        async function loadBusinessLocations() {
+            const query = `
+                query GetLocations {
+                    business {
+                        locations {
+                            id
+                            name
+                            address {
+                                line1
+                                line2
+                                city
+                                state
+                                zip
+                            }
+                        }
+                    }
+                }
+            `;
+            
+            try {
+                const data = await graphqlRequest(query);
+                return data.business.locations.map(location => ({
+                    id: location.id,
+                    name: location.name,
+                    address: `${location.address.line1}, ${location.address.city}, ${location.address.state}`
+                }));
+            } catch (error) {
+                console.error('Failed to load locations:', error);
+                // Fall back to mock data if API fails
+                return LOCATIONS;
+            }
+        }
+
+        async function loadLocationStaff(locationId) {
+            const query = `
+                query GetLocationStaff($locationId: ID!) {
+                    location(id: $locationId) {
+                        staff {
+                            id
+                            displayName
+                            role
+                        }
+                    }
+                }
+            `;
+            
+            try {
+                const data = await graphqlRequest(query, { locationId });
+                return data.location.staff.map(staff => ({
+                    id: staff.id,
+                    name: staff.displayName,
+                    speciality: staff.role,
+                    locationId: locationId
+                }));
+            } catch (error) {
+                console.error('Failed to load staff:', error);
+                // Fall back to mock data if API fails
+                return STAFF_MEMBERS.filter(s => s.locationId === locationId);
+            }
+        }
+
+        // Configuration
+        const API_BASE = 'https://dashboard.boulevard.io/api/2020-01/f6a06736-1132-4365-b79a-a69c648a746a/client';
+        const API_KEY = 'YOUR_API_KEY'; // Replace with your actual API key
+        
+        // Mock data - replace with real data from your system
+        const LOCATIONS = [
+            { id: 'loc1', name: 'Downtown Clinic', address: '123 Main St' },
+            { id: 'loc2', name: 'West Side Spa', address: '456 Oak Ave' },
+            { id: 'loc3', name: 'North Branch', address: '789 Pine Rd' }
+        ];
+
+        const STAFF_MEMBERS = [
+            { id: 'staff1', name: 'Dr. Sarah Chen', speciality: 'Injectable Specialist', locationId: 'loc1' },
+            { id: 'staff2', name: 'Emma Rodriguez', speciality: 'Skincare Expert', locationId: 'loc1' },
+            { id: 'staff3', name: 'Dr. Mike Johnson', speciality: 'Injectable Specialist', locationId: 'loc2' },
+            { id: 'staff4', name: 'Lisa Wang', speciality: 'Skincare Expert', locationId: 'loc3' }
+        ];
+
+        // State management
+        let currentFlow = null;
+        let currentStep = 0;
+        let bookingState = {
+            locationId: null,
+            staffId: null,
+            serviceType: null,
+            serviceId: null,
+            cartId: null,
+            cartData: null,
+            selectedDate: null,
+            selectedTime: null,
+            clientInfo: {}
+        };
+
+        // DOM helpers
+        const messagesContainer = document.getElementById('messages');
+
+        function addMessage(content, isUser = false, showButtons = true) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'system-message'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `bubble ${isUser ? 'user-bubble' : 'system-bubble'}`;
+            bubble.innerHTML = content;
+            
+            messageDiv.appendChild(bubble);
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            return bubble;
+        }
+
+        function addUserMessage(text) {
+            addMessage(text, true);
+        }
+
+        function showLoading() {
+            return addMessage('<div class="loading"></div> Processing...');
+        }
+
+        function hideLoading(loadingElement) {
+            if (loadingElement && loadingElement.parentNode) {
+                loadingElement.parentNode.parentNode.remove();
+            }
+        }
+
+        function showError(message, retry = null) {
+            let errorHtml = `<div class="error-message">${message}</div>`;
+            if (retry) {
+                errorHtml += `<button class="action-button" onclick="${retry}" style="margin-top: 10px;">Try Again</button>`;
+            }
+            addMessage(errorHtml);
+        }
+
+        // Test function - call testAPI() in browser console to test your proxy
+        window.testAPI = async function() {
+            try {
+                console.log('Testing API connection...');
+                const testQuery = `
+                    query TestQuery {
+                        business {
+                            id
+                            name
+                        }
+                    }
+                `;
+                const result = await graphqlRequest(testQuery);
+                console.log('✅ API test successful:', result);
+                return result;
+            } catch (error) {
+                console.error('❌ API test failed:', error);
+                return error;
+            }
+        };
+
+        // GraphQL API functions
+        async function graphqlRequest(query, variables = {}) {
+            try {
+                console.log('Making GraphQL request to:', API_BASE);
+                console.log('Query:', query.split('\n')[1]?.trim()); // Log query name
+                console.log('Variables:', variables);
+                
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ query, variables })
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('HTTP error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('GraphQL response:', data);
+                
+                if (data.errors) {
+                    console.error('GraphQL errors:', data.errors);
+                    throw new Error(data.errors[0].message);
+                }
+
+                return data.data;
+            } catch (error) {
+                console.error('GraphQL Error:', error);
+                throw error;
+            }
+        }
+
+        async function createCart(locationId) {
+            const query = `
+                mutation CreateCart($locationId: ID!) {
+                    createCart(input: { locationId: $locationId }) {
+                        cart {
+                            id
+                            expiresAt
+                            availableCategories {
+                                name
+                                availableItems {
+                                    id
+                                    name
+                                    description
+                                    ... on CartAvailableBookableItem {
+                                        listPrice
+                                        listDuration
+                                        staffVariants {
+                                            id
+                                            price
+                                            duration
+                                            staff {
+                                                id
+                                                firstName
+                                                lastName
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            `;
+            const variables = { locationId };
+            const data = await graphqlRequest(query, variables);
+            
+            // Store the cart data for later use
+            bookingState.cartData = data.createCart.cart;
+            return data.createCart.cart.id;
+        }
+
+        async function getServices(cartId, categoryType) {
+            // Use the cart data we stored from createCart
+            if (!bookingState.cartData || !bookingState.cartData.availableCategories) {
+                throw new Error('Cart data not available');
+            }
+            
+            const categories = bookingState.cartData.availableCategories;
+            
+            // Filter services by category type
+            const categoryFilter = categoryType === 'injectable' ? 
+                ['Injectable', 'Injectables', 'Botox', 'Filler', 'Dysport', 'Neurotoxin'] : 
+                ['Facial', 'Skincare', 'Treatment', 'Peel', 'HydraFacial', 'Microneedling'];
+            
+            let filteredServices = [];
+            
+            categories.forEach(category => {
+                const categoryName = category.name || '';
+                const isMatchingCategory = categoryFilter.some(filter => 
+                    categoryName.toLowerCase().includes(filter.toLowerCase())
+                );
+                
+                if (isMatchingCategory) {
+                    category.availableItems.forEach(item => {
+                        if (item.listPrice !== undefined) { // Only bookable items
+                            filteredServices.push({
+                                id: item.id,
+                                name: item.name,
+                                description: item.description,
+                                duration: item.listDuration,
+                                price: item.listPrice,
+                                staffVariants: item.staffVariants || []
+                            });
+                        }
+                    });
+                }
+            });
+            
+            return filteredServices;
+        }
+
+        async function addCartSelectedBookableItem(cartId, itemId, staffVariantId = null) {
+            const query = `
+                mutation AddCartItem($cartId: ID!, $itemId: ID!, $itemStaffVariantId: ID) {
+                    addCartSelectedBookableItem(input: {
+                        id: $cartId,
+                        itemId: $itemId,
+                        itemStaffVariantId: $itemStaffVariantId
+                    }) {
+                        cart { id }
+                    }
+                }
+            `;
+            const variables = { 
+                cartId: cartId,
+                itemId: itemId,
+                ...(staffVariantId && { itemStaffVariantId: staffVariantId })
+            };
+            return await graphqlRequest(query, variables);
+        }
+
+        async function getCartBookableTimes(cartId, date) {
+            const query = `
+                query GetCartBookableTimes($cartId: ID!, $searchDate: Date!) {
+                    cartBookableTimes(
+                        id: $cartId,
+                        searchDate: $searchDate,
+                        tz: "America/New_York"
+                    ) {
+                        id
+                        startTime
+                    }
+                }
+            `;
+            
+            const variables = { cartId, searchDate: date };
+            const data = await graphqlRequest(query, variables);
+            
+            return data.cartBookableTimes.map(slot => ({
+                id: slot.id,
+                startTime: slot.startTime,
+                endTime: null // Not provided in this API
+            }));
+        }
+
+        async function reserveSlot(cartId, bookableTimeId) {
+            const query = `
+                mutation ReserveCartBookableItems($cartId: ID!, $bookableTimeId: ID!) {
+                    reserveCartBookableItems(input: {
+                        id: $cartId,
+                        bookableTimeId: $bookableTimeId
+                    }) {
+                        cart { id }
+                    }
+                }
+            `;
+            const variables = { cartId, bookableTimeId };
+            return await graphqlRequest(query, variables);
+        }
+
+        async function updateCartWithClientInfo(cartId, clientInfo) {
+            const query = `
+                mutation UpdateCart(
+                    $cartId: ID!,
+                    $email: Email!,
+                    $firstName: String!,
+                    $lastName: String!,
+                    $phoneNumber: PhoneNumber!
+                ) {
+                    updateCart(input: {
+                        id: $cartId,
+                        clientInformation: {
+                            email: $email,
+                            firstName: $firstName,
+                            lastName: $lastName,
+                            phoneNumber: $phoneNumber
+                        }
+                    }) {
+                        cart {
+                            id
+                            clientInformation {
+                                firstName
+                                lastName
+                                email
+                                phoneNumber
+                            }
+                        }
+                    }
+                }
+            `;
+            
+            // Split full name into first and last name
+            const nameParts = clientInfo.name.trim().split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            
+            const variables = { 
+                cartId: cartId,
+                email: clientInfo.email,
+                firstName: firstName,
+                lastName: lastName,
+                phoneNumber: clientInfo.phone
+            };
+            return await graphqlRequest(query, variables);
+        }
+
+        async function completeBooking(cartId) {
+            const query = `
+                mutation BookingComplete($input: BookingCompleteInput!) {
+                    bookingComplete(input: $input) {
+                        booking {
+                            id
+                            state
+                            insertedAt
+                        }
+                        bookingAppointments {
+                            id
+                            startTime
+                            endTime
+                            state
+                            client {
+                                id
+                                firstName
+                                lastName
+                                email
+                                phoneNumber
+                            }
+                            location {
+                                id
+                                name
+                            }
+                            services {
+                                id
+                                name
+                            }
+                            staff {
+                                id
+                                firstName
+                                lastName
+                            }
+                        }
+                        bookingWarnings {
+                            field
+                            message
+                        }
+                    }
+                }
+            `;
+            const variables = { input: { cartId } };
+            const data = await graphqlRequest(query, variables);
+            
+            return {
+                success: true,
+                appointmentId: data.bookingComplete.booking.id,
+                appointments: data.bookingComplete.bookingAppointments,
+                warnings: data.bookingComplete.bookingWarnings
+            };
+        }
+
+        // Flow implementations
+        function startFlowA() {
+            currentFlow = 'A';
+            currentStep = 1;
+            bookingState = { locationId: null, staffId: null, serviceType: null, serviceId: null, cartId: null, cartData: null, selectedDate: null, selectedTime: null, clientInfo: {} };
+            
+            let locationsHtml = 'Please select your preferred location:<br><br>';
+            locationsHtml += '<div class="button-grid single-column">';
+            LOCATIONS.forEach(location => {
+                locationsHtml += `<button class="action-button" onclick="selectLocation('${location.id}')">${location.name}<br><small>${location.address}</small></button>`;
+            });
+            locationsHtml += '</div>';
+            
+            addMessage(locationsHtml);
+        }
+
+        async function selectLocation(locationId) {
+            bookingState.locationId = locationId;
+            const location = LOCATIONS.find(l => l.id === locationId);
+            addUserMessage(`Selected: ${location.name}`);
+            
+            let serviceTypeHtml = 'What type of service are you looking for?<br><br>';
+            serviceTypeHtml += '<div class="button-grid">';
+            serviceTypeHtml += '<button class="action-button" onclick="selectServiceType(\'injectable\')">Injectable Treatments</button>';
+            serviceTypeHtml += '<button class="action-button" onclick="selectServiceType(\'skincare\')">Skincare Services</button>';
+            serviceTypeHtml += '</div>';
+            
+            addMessage(serviceTypeHtml);
+        }
+
+        async function selectServiceType(type) {
+            bookingState.serviceType = type;
+            addUserMessage(type === 'injectable' ? 'Injectable Treatments' : 'Skincare Services');
+            
+            const loading = showLoading();
+            
+            try {
+                bookingState.cartId = await createCart(bookingState.locationId);
+                const services = await getServices(bookingState.cartId, type);
+                
+                hideLoading(loading);
+                
+                let servicesHtml = `Here are our available ${type} services:<br><br>`;
+                servicesHtml += '<div class="button-grid single-column">';
+                services.forEach(service => {
+                    const price = service.price ? `${service.price}` : 'Price varies';
+                    const duration = service.duration ? `${service.duration} min` : '';
+                    const details = [price, duration].filter(Boolean).join(' • ');
+                    servicesHtml += `<button class="action-button" onclick="selectService('${service.id}')">${service.name}<br><small>${details}</small></button>`;
+                });
+                servicesHtml += '</div>';
+                
+                addMessage(servicesHtml);
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to load services. Please try again.', 'selectServiceType(\'' + type + '\')');
+            }
+        }
+
+        async function selectService(serviceId) {
+            bookingState.serviceId = serviceId;
+            
+            const loading = showLoading();
+            
+            try {
+                // Add the selected service to the cart
+                await addCartSelectedBookableItem(bookingState.cartId, serviceId);
+                
+                hideLoading(loading);
+                
+                addUserMessage('Service selected');
+                
+                let staffOptionHtml = 'How would you like to book?<br><br>';
+                staffOptionHtml += '<div class="button-grid">';
+                staffOptionHtml += '<button class="action-button" onclick="selectFirstAvailable()">First Available Time</button>';
+                staffOptionHtml += '<button class="action-button" onclick="showStaffSelection()">Choose Specific Staff</button>';
+                staffOptionHtml += '</div>';
+                
+                addMessage(staffOptionHtml);
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to add service to cart.', 'selectServiceType(\'' + bookingState.serviceType + '\')');
+            }
+        }
+
+        async function selectFirstAvailable() {
+            addUserMessage('First Available Time');
+            
+            const loading = showLoading();
+            
+            try {
+                // Add the selected service to the cart first
+                await addCartSelectedBookableItem(bookingState.cartId, bookingState.serviceId);
+                
+                // Check next 7 days for availability
+                let foundSlot = null;
+                
+                for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+                    const checkDate = new Date();
+                    checkDate.setDate(checkDate.getDate() + dayOffset);
+                    const dateStr = checkDate.toISOString().split('T')[0];
+                    
+                    try {
+                        const slots = await getCartBookableTimes(bookingState.cartId, dateStr);
+                        if (slots.length > 0) {
+                            foundSlot = {
+                                date: dateStr,
+                                slot: slots[0]
+                            };
+                            break;
+                        }
+                    } catch (error) {
+                        // Continue to next date if this one fails
+                        continue;
+                    }
+                }
+                
+                hideLoading(loading);
+                
+                if (!foundSlot) {
+                    showError('No available appointments found in the next 7 days. Please try selecting a specific staff member.', 'showStaffSelection()');
+                    return;
+                }
+                
+                bookingState.selectedDate = foundSlot.date;
+                bookingState.selectedTime = foundSlot.slot.id;
+                
+                const displayDate = new Date(foundSlot.date).toLocaleDateString();
+                addMessage(`Great! I found an available slot for you:<br><br><strong>${displayDate} at ${foundSlot.slot.startTime}</strong><br><br>Ready to confirm this appointment?`);
+                
+                // Reserve the slot
+                await reserveSlot(bookingState.cartId, foundSlot.slot.id);
+                
+                showClientInfoForm();
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to find available times. Please try selecting a specific staff member.', 'showStaffSelection()');
+            }
+        }
+
+        function showStaffSelection() {
+            addUserMessage('Choose Specific Staff');
+            
+            const locationStaff = STAFF_MEMBERS.filter(staff => staff.locationId === bookingState.locationId);
+            
+            if (locationStaff.length === 0) {
+                showError('No staff available at this location.');
+                return;
+            }
+            
+            let staffHtml = 'Please select your preferred provider:<br><br>';
+            staffHtml += '<div class="button-grid single-column">';
+            locationStaff.forEach(staff => {
+                staffHtml += `<button class="action-button" onclick="selectStaff('${staff.id}')">${staff.name}<br><small>${staff.speciality}</small></button>`;
+            });
+            staffHtml += '</div>';
+            
+            addMessage(staffHtml);
+        }
+
+        async function selectStaff(staffId) {
+            bookingState.staffId = staffId;
+            const staff = STAFF_MEMBERS.find(s => s.id === staffId);
+            addUserMessage(`Selected: ${staff ? staff.name : 'Staff Member'}`);
+            
+            const loading = showLoading();
+            
+            try {
+                // Add staff variant to the selected service if needed
+                if (bookingState.serviceId) {
+                    await addCartSelectedBookableItem(bookingState.cartId, bookingState.serviceId, staffId);
+                }
+                
+                hideLoading(loading);
+                
+                // Continue to time selection...
+                showCalendarForStaff(staffId);
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to select staff member.', 'showStaffSelection()');
+            }
+        }
+
+        function startFlowB() {
+            currentFlow = 'B';
+            currentStep = 1;
+            bookingState = { locationId: null, staffId: null, serviceType: null, serviceId: null, cartId: null, cartData: null, selectedDate: null, selectedTime: null, clientInfo: {} };
+            
+            let staffHtml = 'Quick booking! Select a staff member to see their next available times:<br><br>';
+            staffHtml += '<div class="button-grid single-column">';
+            STAFF_MEMBERS.forEach(staff => {
+                staffHtml += `<button class="action-button" onclick="selectStaffQuick('${staff.id}')">${staff.name}<br><small>${staff.speciality}</small></button>`;
+            });
+            staffHtml += '</div>';
+            
+            addMessage(staffHtml);
+        }
+
+        async function selectStaffQuick(staffId) {
+            bookingState.staffId = staffId;
+            const staff = STAFF_MEMBERS.find(s => s.id === staffId);
+            addUserMessage(`Selected: ${staff.name}`);
+            
+            const loading = showLoading();
+            
+            try {
+                // Create cart at staff's location
+                bookingState.locationId = staff.locationId;
+                bookingState.cartId = await createCart(bookingState.locationId);
+                
+                // Get next 3 available time slots by checking multiple days
+                const quickTimes = [];
+                
+                // Check next 7 days for availability
+                for (let dayOffset = 0; dayOffset < 7 && quickTimes.length < 3; dayOffset++) {
+                    const checkDate = new Date();
+                    checkDate.setDate(checkDate.getDate() + dayOffset);
+                    const dateStr = checkDate.toISOString().split('T')[0];
+                    
+                    try {
+                        const slots = await getCartBookableTimes(bookingState.cartId, dateStr);
+                        for (const slot of slots) {
+                            if (quickTimes.length < 3) {
+                                const displayDate = checkDate.toLocaleDateString('en-US', { 
+                                    weekday: 'short', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                });
+                                quickTimes.push({
+                                    time: `${displayDate} ${slot.startTime}`,
+                                    id: slot.id,
+                                    date: dateStr,
+                                    slot: slot
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        continue; // Skip this date if error
+                    }
+                }
+                
+                hideLoading(loading);
+                
+                if (quickTimes.length === 0) {
+                    showError('No available appointments found for this location in the next week.', 'startFlowB()');
+                    return;
+                }
+                
+                let timesHtml = `Here are the next available times:<br><br>`;
+                timesHtml += '<div class="button-grid single-column">';
+                quickTimes.forEach(time => {
+                    timesHtml += `<button class="action-button" onclick="selectQuickTime('${time.id}', '${time.time}', '${time.date}')">${time.time}</button>`;
+                });
+                timesHtml += '</div>';
+                
+                addMessage(timesHtml);
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to load available times.', 'selectStaffQuick(\'' + staffId + '\')');
+            }
+        }
+
+        async function selectQuickTime(timeId, timeDisplay, selectedDate) {
+            bookingState.selectedTime = timeId;
+            bookingState.selectedDate = selectedDate;
+            addUserMessage(`Selected: ${timeDisplay}`);
+            
+            let serviceTypeHtml = 'What type of service would you like?<br><br>';
+            serviceTypeHtml += '<div class="button-grid">';
+            serviceTypeHtml += '<button class="action-button" onclick="selectServiceTypeQuick(\'injectable\')">Injectable Treatments</button>';
+            serviceTypeHtml += '<button class="action-button" onclick="selectServiceTypeQuick(\'skincare\')">Skincare Services</button>';
+            serviceTypeHtml += '</div>';
+            
+            addMessage(serviceTypeHtml);
+        }
+
+        async function selectServiceTypeQuick(type) {
+            bookingState.serviceType = type;
+            addUserMessage(type === 'injectable' ? 'Injectable Treatments' : 'Skincare Services');
+            
+            const loading = showLoading();
+            
+            try {
+                // Get services for this type
+                const services = await getServices(bookingState.cartId, type);
+                
+                if (services.length === 0) {
+                    hideLoading(loading);
+                    showError('No services available for this category.');
+                    return;
+                }
+                
+                // For quick booking, auto-select the first available service
+                // In a real implementation, you might want to show the service selection
+                bookingState.serviceId = services[0].id;
+                
+                // Add service to cart
+                await addCartSelectedBookableItem(bookingState.cartId, bookingState.serviceId);
+                
+                // Reserve the time slot
+                await reserveSlot(bookingState.cartId, bookingState.selectedTime);
+                
+                hideLoading(loading);
+                
+                addMessage(`Perfect! Selected ${services[0].name}. Let me collect your information to complete the booking.`);
+                showClientInfoForm();
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to process service selection.', 'selectServiceTypeQuick(\'' + type + '\')');
+            }
+        }
+
+        function startFlowC() {
+            currentFlow = 'C';
+            currentStep = 1;
+            bookingState = { locationId: null, staffId: null, serviceType: null, serviceId: null, cartId: null, cartData: null, selectedDate: null, selectedTime: null, clientInfo: {} };
+            
+            let staffHtml = 'Select a staff member to view their full calendar:<br><br>';
+            staffHtml += '<div class="button-grid single-column">';
+            STAFF_MEMBERS.forEach(staff => {
+                staffHtml += `<button class="action-button" onclick="selectStaffCalendar('${staff.id}')">${staff.name}<br><small>${staff.speciality}</small></button>`;
+            });
+            staffHtml += '</div>';
+            
+            addMessage(staffHtml);
+        }
+
+        async function selectStaffCalendar(staffId) {
+            bookingState.staffId = staffId;
+            const staff = STAFF_MEMBERS.find(s => s.id === staffId);
+            addUserMessage(`Selected: ${staff.name}`);
+            
+            const loading = showLoading();
+            
+            try {
+                // Set location to staff's primary location
+                bookingState.locationId = staff.locationId;
+                bookingState.cartId = await createCart(bookingState.locationId);
+                
+                hideLoading(loading);
+                showCalendarForStaff(staffId);
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to load calendar.', 'selectStaffCalendar(\'' + staffId + '\')');
+            }
+        }
+
+        async function showCalendarForStaff(staffId) {
+            const staff = STAFF_MEMBERS.find(s => s.id === staffId);
+            
+            let calendarHtml = `Select a date to see available times:<br><br>`;
+            
+            // Generate calendar for current month
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startCalendar = new Date(firstDay);
+            startCalendar.setDate(startCalendar.getDate() - firstDay.getDay());
+            
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            calendarHtml += `<div style="text-align: center; margin-bottom: 15px; font-weight: 600;">${monthNames[currentMonth]} ${currentYear}</div>`;
+            
+            calendarHtml += '<div class="calendar-grid">';
+            
+            // Headers
+            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                calendarHtml += `<div class="calendar-header">${day}</div>`;
+            });
+            
+            const bubble = addMessage(calendarHtml + '</div><div style="text-align: center; margin-top: 10px;">Loading availability...</div>');
+            
+            // Load availability for each day in the month
+            const calendarDays = [];
+            const currentDate = new Date(startCalendar);
+            const availabilityPromises = [];
+            
+            for (let i = 0; i < 42; i++) {
+                const dayNum = currentDate.getDate();
+                const isCurrentMonth = currentDate.getMonth() === currentMonth;
+                const isPast = currentDate < today;
+                const dateStr = currentDate.toISOString().split('T')[0];
+                
+                calendarDays.push({
+                    dayNum,
+                    isCurrentMonth,
+                    isPast,
+                    dateStr,
+                    isAvailable: false
+                });
+                
+                // Only check availability for current month, future dates
+                if (isCurrentMonth && !isPast) {
+                    availabilityPromises.push(
+                        getCartBookableTimes(bookingState.cartId, dateStr)
+                            .then(slots => ({ dateStr, hasSlots: slots.length > 0 }))
+                            .catch(() => ({ dateStr, hasSlots: false }))
+                    );
+                }
+                
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            try {
+                // Wait for all availability checks
+                const availabilityResults = await Promise.all(availabilityPromises);
+                const availabilityMap = {};
+                availabilityResults.forEach(result => {
+                    availabilityMap[result.dateStr] = result.hasSlots;
+                });
+                
+                // Update calendar days with availability
+                calendarDays.forEach(day => {
+                    if (day.isCurrentMonth && !day.isPast) {
+                        day.isAvailable = availabilityMap[day.dateStr] || false;
+                    }
+                });
+                
+                // Rebuild calendar with availability data
+                let finalCalendarHtml = `Select a date to see available times:<br><br>`;
+                finalCalendarHtml += `<div style="text-align: center; margin-bottom: 15px; font-weight: 600;">${monthNames[currentMonth]} ${currentYear}</div>`;
+                finalCalendarHtml += '<div class="calendar-grid">';
+                
+                // Headers
+                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                    finalCalendarHtml += `<div class="calendar-header">${day}</div>`;
+                });
+                
+                // Calendar days with availability
+                calendarDays.forEach(day => {
+                    let dayClass = 'calendar-day';
+                    if (!day.isCurrentMonth || day.isPast) {
+                        dayClass += ' disabled';
+                    } else if (day.isAvailable) {
+                        dayClass += ' available';
+                    }
+                    
+                    const clickHandler = day.isAvailable ? `onclick="selectCalendarDate('${day.dateStr}', '${staffId}')"` : '';
+                    finalCalendarHtml += `<div class="${dayClass}" ${clickHandler}>${day.dayNum}</div>`;
+                });
+                
+                finalCalendarHtml += '</div>';
+                
+                // Update the existing message
+                bubble.innerHTML = finalCalendarHtml;
+                
+            } catch (error) {
+                bubble.innerHTML = `Select a date to see available times:<br><br><div class="error-message">Failed to load availability. Please try again.</div>`;
+            }
+        }
+
+        async function selectCalendarDate(dateStr, staffId) {
+            bookingState.selectedDate = dateStr;
+            const date = new Date(dateStr);
+            addUserMessage(`Selected: ${date.toLocaleDateString()}`);
+            
+            const loading = showLoading();
+            
+            try {
+                const availableSlots = await getCartBookableTimes(bookingState.cartId, dateStr);
+                
+                hideLoading(loading);
+                
+                if (availableSlots.length === 0) {
+                    addMessage('No available time slots for this date. Please select another date.');
+                    return;
+                }
+                
+                let slotsHtml = 'Available time slots:<br><br>';
+                slotsHtml += '<div class="time-slots">';
+                availableSlots.forEach(slot => {
+                    slotsHtml += `<button class="time-slot" onclick="selectTimeSlot('${slot.id}', '${slot.startTime}')">${slot.startTime}</button>`;
+                });
+                slotsHtml += '</div>';
+                
+                addMessage(slotsHtml);
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to load available times.', 'selectCalendarDate(\'' + dateStr + '\', \'' + staffId + '\')');
+            }
+        }
+
+        async function selectTimeSlot(slotId, timeStr) {
+            bookingState.selectedTime = slotId;
+            addUserMessage(`Selected: ${timeStr}`);
+            
+            const loading = showLoading();
+            
+            try {
+                await reserveSlot(bookingState.cartId, slotId);
+                
+                hideLoading(loading);
+                
+                addMessage('Time slot reserved! Now let me collect your information to complete the booking.');
+                showClientInfoForm();
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to reserve time slot.', 'selectTimeSlot(\'' + slotId + '\', \'' + timeStr + '\')');
+            }
+        }
+
+        function showClientInfoForm() {
+            let formHtml = `
+                <div class="form-group">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-input" id="clientName" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" class="form-input" id="clientEmail" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number *</label>
+                    <input type="tel" class="form-input" id="clientPhone" placeholder="Enter your phone number" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Special Requests (Optional)</label>
+                    <input type="text" class="form-input" id="clientNotes" placeholder="Any special requests or notes">
+                </div>
+                <div class="button-grid" style="margin-top: 20px;">
+                    <button class="action-button" onclick="completeBookingProcess()">Complete Booking</button>
+                </div>
+            `;
+            
+            addMessage(formHtml);
+        }
+
+        async function completeBookingProcess() {
+            // Validate form
+            const name = document.getElementById('clientName').value.trim();
+            const email = document.getElementById('clientEmail').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const notes = document.getElementById('clientNotes').value.trim();
+            
+            // Clear previous errors
+            document.querySelectorAll('.form-input').forEach(input => {
+                input.classList.remove('error');
+            });
+            
+            let hasError = false;
+            
+            if (!name) {
+                document.getElementById('clientName').classList.add('error');
+                hasError = true;
+            }
+            
+            if (!email || !email.includes('@')) {
+                document.getElementById('clientEmail').classList.add('error');
+                hasError = true;
+            }
+            
+            if (!phone) {
+                document.getElementById('clientPhone').classList.add('error');
+                hasError = true;
+            }
+            
+            if (hasError) {
+                showError('Please fill in all required fields correctly.');
+                return;
+            }
+            
+            bookingState.clientInfo = { name, email, phone, notes };
+            
+            addUserMessage('Information submitted');
+            
+            const loading = showLoading();
+            
+            try {
+                await updateCartWithClientInfo(bookingState.cartId, bookingState.clientInfo);
+                const result = await completeBooking(bookingState.cartId);
+                
+                hideLoading(loading);
+                
+                if (result.success) {
+                    addMessage(`
+                        <div class="success-message">
+                            <h3>🎉 Booking Confirmed!</h3>
+                            <p>Your appointment has been successfully booked.</p>
+                            <p><strong>Confirmation ID:</strong> ${result.appointmentId || 'BK' + Date.now()}</p>
+                            <p>You'll receive a confirmation email shortly.</p>
+                        </div>
+                    `);
+                    
+                    // Reset for new booking
+                    setTimeout(() => {
+                        addMessage(`
+                            Ready to book another appointment?<br><br>
+                            <div class="button-grid">
+                                <button class="action-button" onclick="location.reload()">New Booking</button>
+                            </div>
+                        `);
+                    }, 3000);
+                } else {
+                    showError('Booking failed. Please try again.', 'completeBookingProcess()');
+                }
+            } catch (error) {
+                hideLoading(loading);
+                showError('Failed to complete booking. Please try again.', 'completeBookingProcess()');
+            }
+        }
+
+        // Initialize the chat
+        function initializeChat() {
+            addMessage(`
+                Welcome! I'm here to help you book your appointment. Choose how you'd like to get started:<br><br>
+                <div class="button-grid single-column">
+                    <button class="action-button" onclick="startFlowA()">📍 Choose Location First<br><small>Browse services by location</small></button>
+                    <button class="action-button" onclick="startFlowB()">⚡ Quick Staff Booking<br><small>See next available times</small></button>
+                    <button class="action-button" onclick="startFlowC()">📅 Full Staff Calendar<br><small>View complete availability</small></button>
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666;">
+                    💡 <strong>Developers:</strong> Open browser console and run <code>testAPI()</code> to test your proxy connection.
+                </div>
+            `);
+        }
+
+        // Start the chat when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            initializeChat();
+            
+            // Silent connection test in background
+            setTimeout(async () => {
+                try {
+                    await testAPI();
+                    console.log('✅ Boulevard API proxy is working correctly!');
+                } catch (error) {
+                    console.warn('⚠️ Boulevard API proxy connection failed. Please check your proxy setup.');
+                    console.warn('Error:', error.message);
+                    console.warn('Make sure /api/blvd forwards to: https://dashboard.boulevard.io/api/2020-01/YOUR_BUSINESS_ID/client');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
